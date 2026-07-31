@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const db = require("./db");
+const {calculatePremium} = require("./premiumCalculator");
 
 const app = express();
 const PORT = 3001;
@@ -22,10 +23,6 @@ const VALID_HOSPITAL_COVERS = [
 const VALID_EXTRAS_COVERS = ["None", "Basic", "Standard", "Premium"];
 const VALID_PAYMENT_FREQUENCIES = ["Monthly", "Yearly"];
 
-/**
- * Convert a value to a number.
- * Returns null when the value is empty or invalid.
- */
 function parseNumber(value) {
   if (value === undefined || value === null || value === "") {
     return null;
@@ -36,9 +33,6 @@ function parseNumber(value) {
   return Number.isFinite(number) ? number : null;
 }
 
-/**
- * Validate and normalise quote data.
- */
 function validateQuote(body) {
   const customerName =
     typeof body.customer_name === "string"
@@ -70,14 +64,12 @@ function validateQuote(body) {
     };
   }
 
-  // Cover type
   if (!VALID_COVER_TYPES.includes(coverType)) {
     return {
       error: "Cover type must be Single, Couple, or Family.",
     };
   }
 
-  // Applicant 1 age
   if (
     applicant1Age === null ||
     !Number.isInteger(applicant1Age) ||
@@ -253,6 +245,10 @@ app.post("/api/quotes", (req, res) => {
   }
 
   const quote = validation.data;
+  const calculation = calculatePremium(quote);
+
+  quote.monthly_premium = calculation.monthlyPremium;
+  quote.yearly_premium = calculation.yearlyPremium;
 
   const sql = `
     INSERT INTO quotes (
@@ -332,6 +328,11 @@ app.put("/api/quotes/:id", (req, res) => {
   }
 
   const quote = validation.data;
+  const calculation = calculatePremium(quote);
+
+  quote.monthly_premium = calculation.monthlyPremium;
+  quote.yearly_premium = calculation.yearlyPremium;
+  
 
   const checkSql = `
     SELECT id
