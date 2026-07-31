@@ -9,6 +9,184 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
+// Allowed values
+const VALID_COVER_TYPES = ["Single", "Couple", "Family"];
+const VALID_COVER_HISTORY = ["Yes", "No", "Not sure"];
+const VALID_HOSPITAL_COVERS = [
+  "None",
+  "Basic",
+  "Bronze",
+  "Silver",
+  "Gold",
+];
+const VALID_EXTRAS_COVERS = ["None", "Basic", "Standard", "Premium"];
+const VALID_PAYMENT_FREQUENCIES = ["Monthly", "Yearly"];
+
+/**
+ * Convert a value to a number.
+ * Returns null when the value is empty or invalid.
+ */
+function parseNumber(value) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : null;
+}
+
+/**
+ * Validate and normalise quote data.
+ */
+function validateQuote(body) {
+  const customerName =
+    typeof body.customer_name === "string"
+      ? body.customer_name.trim()
+      : "";
+
+  const coverType = body.cover_type;
+  const applicant1Age = parseNumber(body.applicant1_age);
+  const applicant1CoverHistory = body.applicant1_cover_history;
+
+  let applicant2Age = parseNumber(body.applicant2_age);
+  let applicant2CoverHistory = body.applicant2_cover_history || null;
+
+  const hospitalCover = body.hospital_cover;
+  const extrasCover = body.extras_cover;
+  const paymentFrequency = body.payment_frequency;
+
+  let annualDiscount = parseNumber(body.annual_discount);
+  const monthlyPremium = parseNumber(body.monthly_premium) ?? 0;
+  const yearlyPremium = parseNumber(body.yearly_premium) ?? 0;
+
+  const notes =
+    typeof body.notes === "string" ? body.notes.trim() : "";
+
+  // Customer name
+  if (!customerName) {
+    return {
+      error: "Customer name is required.",
+    };
+  }
+
+  // Cover type
+  if (!VALID_COVER_TYPES.includes(coverType)) {
+    return {
+      error: "Cover type must be Single, Couple, or Family.",
+    };
+  }
+
+  // Applicant 1 age
+  if (
+    applicant1Age === null ||
+    !Number.isInteger(applicant1Age) ||
+    applicant1Age < 18 ||
+    applicant1Age > 100
+  ) {
+    return {
+      error: "Applicant 1 age must be a whole number between 18 and 100.",
+    };
+  }
+
+  // Applicant 1 cover history
+  if (!VALID_COVER_HISTORY.includes(applicant1CoverHistory)) {
+    return {
+      error:
+        "Applicant 1 hospital cover history must be Yes, No, or Not sure.",
+    };
+  }
+
+  // Single cover should not contain Applicant 2 information
+  if (coverType === "Single") {
+    applicant2Age = null;
+    applicant2CoverHistory = null;
+  }
+
+  // Couple and Family require Applicant 2
+  if (coverType === "Couple" || coverType === "Family") {
+    if (
+      applicant2Age === null ||
+      !Number.isInteger(applicant2Age) ||
+      applicant2Age < 18 ||
+      applicant2Age > 100
+    ) {
+      return {
+        error:
+          "Applicant 2 age is required and must be a whole number between 18 and 100.",
+      };
+    }
+
+    if (!VALID_COVER_HISTORY.includes(applicant2CoverHistory)) {
+      return {
+        error:
+          "Applicant 2 hospital cover history must be Yes, No, or Not sure.",
+      };
+    }
+  }
+
+  // Hospital cover
+  if (!VALID_HOSPITAL_COVERS.includes(hospitalCover)) {
+    return {
+      error:
+        "Hospital cover must be None, Basic, Bronze, Silver, or Gold.",
+    };
+  }
+
+  // Extras cover
+  if (!VALID_EXTRAS_COVERS.includes(extrasCover)) {
+    return {
+      error:
+        "Extras cover must be None, Basic, Standard, or Premium.",
+    };
+  }
+
+  // Payment frequency
+  if (!VALID_PAYMENT_FREQUENCIES.includes(paymentFrequency)) {
+    return {
+      error: "Payment frequency must be Monthly or Yearly.",
+    };
+  }
+
+  // Annual discount
+  if (annualDiscount === null) {
+    annualDiscount = 0;
+  }
+
+  if (
+    !Number.isFinite(annualDiscount) ||
+    annualDiscount < 0 ||
+    annualDiscount > 10
+  ) {
+    return {
+      error: "Annual discount must be between 0 and 10.",
+    };
+  }
+
+  // Annual discount only applies to yearly payments
+  if (paymentFrequency === "Monthly") {
+    annualDiscount = 0;
+  }
+
+  return {
+    data: {
+      customer_name: customerName,
+      cover_type: coverType,
+      applicant1_age: applicant1Age,
+      applicant1_cover_history: applicant1CoverHistory,
+      applicant2_age: applicant2Age,
+      applicant2_cover_history: applicant2CoverHistory,
+      hospital_cover: hospitalCover,
+      extras_cover: extrasCover,
+      payment_frequency: paymentFrequency,
+      annual_discount: annualDiscount,
+      monthly_premium: monthlyPremium,
+      yearly_premium: yearlyPremium,
+      notes,
+    },
+  };
+}
+
 // Test route
 app.get("/", (req, res) => {
   res.json({
@@ -32,7 +210,7 @@ app.get("/api/quotes", (req, res) => {
       });
     }
 
-    res.status(200).json(rows);
+    return res.status(200).json(rows);
   });
 });
 
@@ -60,96 +238,55 @@ app.get("/api/quotes/:id", (req, res) => {
       });
     }
 
-    res.status(200).json(row);
+    return res.status(200).json(row);
   });
 });
 
 // POST create a new quote
 app.post("/api/quotes", (req, res) => {
-  const {
-    customer_name,
-    cover_type,
-    applicant1_age,
-    applicant1_lhc = 0,
-    applicant2_age = null,
-    applicant2_lhc = 0,
-    hospital_cover,
-    extras_cover,
-    payment_frequency,
-    monthly_premium = 0,
-    yearly_premium = 0,
-    discount = 0,
-    notes = "",
-  } = req.body;
+  const validation = validateQuote(req.body);
 
-  if (
-    !customer_name ||
-    !cover_type ||
-    applicant1_age === undefined ||
-    applicant1_age === null ||
-    !hospital_cover ||
-    !extras_cover ||
-    !payment_frequency
-  ) {
+  if (validation.error) {
     return res.status(400).json({
-      error: "Missing required fields.",
+      error: validation.error,
     });
   }
 
-  if (
-    typeof applicant1_age !== "number" ||
-    applicant1_age < 18 ||
-    applicant1_age > 120
-  ) {
-    return res.status(400).json({
-      error: "Applicant 1 age must be between 18 and 120.",
-    });
-  }
-
-  if (
-    applicant2_age !== null &&
-    (typeof applicant2_age !== "number" ||
-      applicant2_age < 18 ||
-      applicant2_age > 120)
-  ) {
-    return res.status(400).json({
-      error: "Applicant 2 age must be between 18 and 120.",
-    });
-  }
+  const quote = validation.data;
 
   const sql = `
     INSERT INTO quotes (
       customer_name,
       cover_type,
       applicant1_age,
-      applicant1_lhc,
+      applicant1_cover_history,
       applicant2_age,
-      applicant2_lhc,
+      applicant2_cover_history,
       hospital_cover,
       extras_cover,
       payment_frequency,
+      annual_discount,
       monthly_premium,
       yearly_premium,
-      discount,
       notes
     )
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   const values = [
-    customer_name.trim(),
-    cover_type,
-    applicant1_age,
-    applicant1_lhc,
-    applicant2_age,
-    applicant2_lhc,
-    hospital_cover,
-    extras_cover,
-    payment_frequency,
-    monthly_premium,
-    yearly_premium,
-    discount,
-    notes,
+    quote.customer_name,
+    quote.cover_type,
+    quote.applicant1_age,
+    quote.applicant1_cover_history,
+    quote.applicant2_age,
+    quote.applicant2_cover_history,
+    quote.hospital_cover,
+    quote.extras_cover,
+    quote.payment_frequency,
+    quote.annual_discount,
+    quote.monthly_premium,
+    quote.yearly_premium,
+    quote.notes,
   ];
 
   db.run(sql, values, function (error) {
@@ -173,7 +310,7 @@ app.post("/api/quotes", (req, res) => {
           });
         }
 
-        res.status(201).json({
+        return res.status(201).json({
           message: "Quote created successfully.",
           quote: newQuote,
         });
@@ -186,56 +323,15 @@ app.post("/api/quotes", (req, res) => {
 app.put("/api/quotes/:id", (req, res) => {
   const { id } = req.params;
 
-  const {
-    customer_name,
-    cover_type,
-    applicant1_age,
-    applicant1_lhc = 0,
-    applicant2_age = null,
-    applicant2_lhc = 0,
-    hospital_cover,
-    extras_cover,
-    payment_frequency,
-    monthly_premium = 0,
-    yearly_premium = 0,
-    discount = 0,
-    notes = "",
-  } = req.body;
+  const validation = validateQuote(req.body);
 
-  if (
-    !customer_name ||
-    !cover_type ||
-    applicant1_age === undefined ||
-    applicant1_age === null ||
-    !hospital_cover ||
-    !extras_cover ||
-    !payment_frequency
-  ) {
+  if (validation.error) {
     return res.status(400).json({
-      error: "Missing required fields.",
+      error: validation.error,
     });
   }
 
-  if (
-    typeof applicant1_age !== "number" ||
-    applicant1_age < 18 ||
-    applicant1_age > 120
-  ) {
-    return res.status(400).json({
-      error: "Applicant 1 age must be between 18 and 120.",
-    });
-  }
-
-  if (
-    applicant2_age !== null &&
-    (typeof applicant2_age !== "number" ||
-      applicant2_age < 18 ||
-      applicant2_age > 120)
-  ) {
-    return res.status(400).json({
-      error: "Applicant 2 age must be between 18 and 120.",
-    });
-  }
+  const quote = validation.data;
 
   const checkSql = `
     SELECT id
@@ -263,33 +359,33 @@ app.put("/api/quotes/:id", (req, res) => {
         customer_name = ?,
         cover_type = ?,
         applicant1_age = ?,
-        applicant1_lhc = ?,
+        applicant1_cover_history = ?,
         applicant2_age = ?,
-        applicant2_lhc = ?,
+        applicant2_cover_history = ?,
         hospital_cover = ?,
         extras_cover = ?,
         payment_frequency = ?,
+        annual_discount = ?,
         monthly_premium = ?,
         yearly_premium = ?,
-        discount = ?,
         notes = ?
       WHERE id = ?
     `;
 
     const values = [
-      customer_name.trim(),
-      cover_type,
-      applicant1_age,
-      applicant1_lhc,
-      applicant2_age,
-      applicant2_lhc,
-      hospital_cover,
-      extras_cover,
-      payment_frequency,
-      monthly_premium,
-      yearly_premium,
-      discount,
-      notes,
+      quote.customer_name,
+      quote.cover_type,
+      quote.applicant1_age,
+      quote.applicant1_cover_history,
+      quote.applicant2_age,
+      quote.applicant2_cover_history,
+      quote.hospital_cover,
+      quote.extras_cover,
+      quote.payment_frequency,
+      quote.annual_discount,
+      quote.monthly_premium,
+      quote.yearly_premium,
+      quote.notes,
       id,
     ];
 
@@ -312,7 +408,7 @@ app.put("/api/quotes/:id", (req, res) => {
             });
           }
 
-          res.status(200).json({
+          return res.status(200).json({
             message: "Quote updated successfully.",
             quote: updatedQuote,
           });
@@ -345,7 +441,7 @@ app.delete("/api/quotes/:id", (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Quote deleted successfully.",
     });
   });
