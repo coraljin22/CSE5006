@@ -141,10 +141,10 @@ function QuoteDetailPage() {
         <div className="detail-summary-heading">
           <div>
             <p className="eyebrow">
-              Estimated premium
+              Premium estimate
             </p>
 
-            <h2>Quote Summary</h2>
+            <h2>Estimated Health Cover Premium</h2>
           </div>
 
           <span className="cover-type-badge">
@@ -194,6 +194,20 @@ function QuoteDetailPage() {
 
           <div className="detail-list">
             <div className="detail-row">
+                <span>Quote ID</span>
+                <strong>#{quote.id}</strong>
+            </div>
+
+            <div className="detail-row">
+                <span>Created date</span>
+                <strong>
+                    {quote.created_at
+                      ? new Date(quote.created_at).toLocaleString("en-AU")
+                      : "Not available"}
+                </strong>
+            </div>
+
+            <div className="detail-row">
               <span>Customer name</span>
               <strong>{quote.customer_name}</strong>
             </div>
@@ -236,7 +250,7 @@ function QuoteDetailPage() {
           <h2>Applicant Information</h2>
 
           <div className="applicant-detail-block">
-            <h3>Applicant 1</h3>
+            <h3>Primary Applicant</h3>
 
             <div className="detail-list">
               <div className="detail-row">
@@ -278,7 +292,7 @@ function QuoteDetailPage() {
 
           {hasApplicant2 && (
             <div className="applicant-detail-block">
-              <h3>Applicant 2</h3>
+              <h3>Secondary Applicant</h3>
 
               <div className="detail-list">
                 <div className="detail-row">
@@ -413,34 +427,50 @@ function QuoteDetailPage() {
         </div>
 
         <div className="plain-explanation">
-          <h3>How this quote was calculated</h3>
+            <h3>How this quote was calculated</h3>
 
-          <p>
-            Hospital cover was calculated separately
-            for each adult. Any applicable Lifetime
-            Health Cover loading was added only to that
-            applicant’s hospital premium.
-          </p>
+            <div className="explanation-item">
+                <strong>1. Hospital premium</strong>
+                <p>
+                Hospital cover was calculated separately for each adult.
+                Any applicable Lifetime Health Cover loading was added only
+                to that applicant’s hospital premium.
+                </p>
+            </div>
 
-          <p>
-            Extras cover was calculated using the
-            selected extras price multiplied by{" "}
-            {calculation.adult_count} adult
-            {calculation.adult_count === 1 ? "" : "s"}.
-            {quote.cover_type === "Family"
-              ? " The $30 monthly Family upgrade fee was then added once."
-              : ""}
-          </p>
+            <div className="explanation-item">
+                <strong>2. Extras premium</strong>
+                <p>
+                The selected extras price was multiplied by{" "}
+                {calculation.adult_count} adult
+                {calculation.adult_count === 1 ? "" : "s"}.
+                </p>
+            </div>
 
-          <p>
-            The monthly premium was multiplied by 12
-            to calculate the yearly premium before
-            discount.
-            {isYearly
-              ? ` A ${calculation.annual_discount}% annual-payment discount was then applied.`
-              : " No annual discount was applied because Monthly payment was selected."}
-          </p>
+            {quote.cover_type === "Family" && (
+                <div className="explanation-item">
+                <strong>3. Family upgrade fee</strong>
+                <p>
+                    A $30 monthly Family upgrade fee was added once.
+                    Children are not priced individually in this simulator.
+                </p>
+                </div>
+            )}
+
+            <div className="explanation-item">
+                <strong>
+                {quote.cover_type === "Family" ? "4" : "3"}. Yearly premium
+                </strong>
+                <p>
+                The monthly premium was multiplied by 12 to calculate the
+                yearly premium before discount.
+                {isYearly
+                    ? ` A ${calculation.annual_discount}% annual-payment discount was then applied.`
+                    : " No annual discount was applied because Monthly payment was selected."}
+                </p>
+            </div>
         </div>
+
 
         <div className="lhc-statement">
           Lifetime Health Cover loading applies only to
@@ -448,7 +478,7 @@ function QuoteDetailPage() {
           cover.
         </div>
 
-        {calculation.warnings.length > 0 && (
+        {calculation.warnings.length > 0 ? (
           <div className="warning-box">
             <h3>Warnings</h3>
 
@@ -462,12 +492,12 @@ function QuoteDetailPage() {
               )}
             </ul>
           </div>
-        )}
-
-        {quote.notes && (
-          <div className="notes-box">
-            <h3>Notes</h3>
-            <p>{quote.notes}</p>
+        ) : (
+          <div className="success-box">
+            <strong>No calculation warnings.</strong>
+            <p>
+                The supplied information was sufficient to calculate this estimate without an LHC uncertainty warning.
+            </p>
           </div>
         )}
       </section>
