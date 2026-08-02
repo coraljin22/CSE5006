@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const db = require("./db");
-const {calculatePremium} = require("./premiumCalculator");
+const { calculatePremium } = require("./premiumCalculator");
 
 const app = express();
 const PORT = 3001;
@@ -12,7 +12,9 @@ app.use(express.json());
 
 // Allowed values
 const VALID_COVER_TYPES = ["Single", "Couple", "Family"];
+
 const VALID_COVER_HISTORY = ["Yes", "No", "Not sure"];
+
 const VALID_HOSPITAL_COVERS = [
   "None",
   "Basic",
@@ -20,7 +22,14 @@ const VALID_HOSPITAL_COVERS = [
   "Silver",
   "Gold",
 ];
-const VALID_EXTRAS_COVERS = ["None", "Basic", "Standard", "Premium"];
+
+const VALID_EXTRAS_COVERS = [
+  "None",
+  "Basic",
+  "Standard",
+  "Premium",
+];
+
 const VALID_PAYMENT_FREQUENCIES = ["Monthly", "Yearly"];
 
 function parseNumber(value) {
@@ -40,22 +49,24 @@ function validateQuote(body) {
       : "";
 
   const coverType = body.cover_type;
+
   const applicant1Age = parseNumber(body.applicant1_age);
   const applicant1CoverHistory = body.applicant1_cover_history;
 
   let applicant2Age = parseNumber(body.applicant2_age);
-  let applicant2CoverHistory = body.applicant2_cover_history || null;
+  let applicant2CoverHistory =
+    body.applicant2_cover_history || null;
 
   const hospitalCover = body.hospital_cover;
   const extrasCover = body.extras_cover;
   const paymentFrequency = body.payment_frequency;
 
   let annualDiscount = parseNumber(body.annual_discount);
-  const monthlyPremium = parseNumber(body.monthly_premium) ?? 0;
-  const yearlyPremium = parseNumber(body.yearly_premium) ?? 0;
 
   const notes =
-    typeof body.notes === "string" ? body.notes.trim() : "";
+    typeof body.notes === "string"
+      ? body.notes.trim()
+      : "";
 
   // Customer name
   if (!customerName) {
@@ -64,12 +75,14 @@ function validateQuote(body) {
     };
   }
 
+  // Cover type
   if (!VALID_COVER_TYPES.includes(coverType)) {
     return {
       error: "Cover type must be Single, Couple, or Family.",
     };
   }
 
+  // Applicant 1 age
   if (
     applicant1Age === null ||
     !Number.isInteger(applicant1Age) ||
@@ -77,7 +90,8 @@ function validateQuote(body) {
     applicant1Age > 100
   ) {
     return {
-      error: "Applicant 1 age must be a whole number between 18 and 100.",
+      error:
+        "Applicant 1 age must be a whole number between 18 and 100.",
     };
   }
 
@@ -89,7 +103,7 @@ function validateQuote(body) {
     };
   }
 
-  // Single cover should not contain Applicant 2 information
+  // Single cover does not use Applicant 2
   if (coverType === "Single") {
     applicant2Age = null;
     applicant2CoverHistory = null;
@@ -155,7 +169,7 @@ function validateQuote(body) {
     };
   }
 
-  // Annual discount only applies to yearly payments
+  // Discount only applies to yearly payments
   if (paymentFrequency === "Monthly") {
     annualDiscount = 0;
   }
@@ -172,8 +186,6 @@ function validateQuote(body) {
       extras_cover: extrasCover,
       payment_frequency: paymentFrequency,
       annual_discount: annualDiscount,
-      monthly_premium: monthlyPremium,
-      yearly_premium: yearlyPremium,
       notes,
     },
   };
@@ -181,7 +193,7 @@ function validateQuote(body) {
 
 // Test route
 app.get("/", (req, res) => {
-  res.json({
+  return res.status(200).json({
     message: "HealthCoverSim API is running",
   });
 });
@@ -234,6 +246,32 @@ app.get("/api/quotes/:id", (req, res) => {
   });
 });
 
+// POST calculate a quote without saving it
+app.post("/api/calculate", (req, res) => {
+  const validation = validateQuote(req.body);
+
+  if (validation.error) {
+    return res.status(400).json({
+      error: validation.error,
+    });
+  }
+
+  try {
+    const calculation = calculatePremium(validation.data);
+
+    return res.status(200).json({
+      message: "Premium calculated successfully.",
+      quote_input: validation.data,
+      calculation,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to calculate premium.",
+      details: error.message,
+    });
+  }
+});
+
 // POST create a new quote
 app.post("/api/quotes", (req, res) => {
   const validation = validateQuote(req.body);
@@ -245,10 +283,20 @@ app.post("/api/quotes", (req, res) => {
   }
 
   const quote = validation.data;
-  const calculation = calculatePremium(quote);
 
-  quote.monthly_premium = calculation.monthlyPremium;
-  quote.yearly_premium = calculation.yearlyPremium;
+  let calculation;
+
+  try {
+    calculation = calculatePremium(quote);
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to calculate premium.",
+      details: error.message,
+    });
+  }
+
+  quote.monthly_premium = calculation.monthly_premium;
+  quote.yearly_premium = calculation.yearly_premium;
 
   const sql = `
     INSERT INTO quotes (
@@ -301,7 +349,8 @@ app.post("/api/quotes", (req, res) => {
       (selectError, newQuote) => {
         if (selectError) {
           return res.status(500).json({
-            error: "Quote was created, but could not be retrieved.",
+            error:
+              "Quote was created, but could not be retrieved.",
             details: selectError.message,
           });
         }
@@ -309,6 +358,7 @@ app.post("/api/quotes", (req, res) => {
         return res.status(201).json({
           message: "Quote created successfully.",
           quote: newQuote,
+          calculation,
         });
       }
     );
@@ -328,11 +378,20 @@ app.put("/api/quotes/:id", (req, res) => {
   }
 
   const quote = validation.data;
-  const calculation = calculatePremium(quote);
 
-  quote.monthly_premium = calculation.monthlyPremium;
-  quote.yearly_premium = calculation.yearlyPremium;
-  
+  let calculation;
+
+  try {
+    calculation = calculatePremium(quote);
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to calculate premium.",
+      details: error.message,
+    });
+  }
+
+  quote.monthly_premium = calculation.monthly_premium;
+  quote.yearly_premium = calculation.yearly_premium;
 
   const checkSql = `
     SELECT id
@@ -404,7 +463,8 @@ app.put("/api/quotes/:id", (req, res) => {
         (selectError, updatedQuote) => {
           if (selectError) {
             return res.status(500).json({
-              error: "Quote was updated, but could not be retrieved.",
+              error:
+                "Quote was updated, but could not be retrieved.",
               details: selectError.message,
             });
           }
@@ -412,6 +472,7 @@ app.put("/api/quotes/:id", (req, res) => {
           return res.status(200).json({
             message: "Quote updated successfully.",
             quote: updatedQuote,
+            calculation,
           });
         }
       );
@@ -449,13 +510,16 @@ app.delete("/api/quotes/:id", (req, res) => {
 });
 
 // Handle unknown routes
+// This must stay below all valid routes.
 app.use((req, res) => {
-  res.status(404).json({
+  return res.status(404).json({
     error: "Route not found.",
   });
 });
 
 // Start server
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`HealthCoverSim API running at http://localhost:${PORT}`);
+  console.log(
+    `HealthCoverSim API running at http://localhost:${PORT}`
+  );
 });

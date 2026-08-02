@@ -2,46 +2,67 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const API_URL = "http://localhost:3001/api/quotes";
+const CALCULATE_API = "http://localhost:3001/api/calculate";
+const QUOTES_API = "http://localhost:3001/api/quotes";
 
-const initialFormData = {
+const INITIAL_FORM = {
   customer_name: "",
   cover_type: "Single",
   applicant1_age: "",
-  applicant1_lhc: 0,
+  applicant1_cover_history: "Yes",
   applicant2_age: "",
-  applicant2_lhc: 0,
-  hospital_cover: "Basic",
+  applicant2_cover_history: "Yes",
+  hospital_cover: "None",
   extras_cover: "None",
   payment_frequency: "Monthly",
+  annual_discount: 0,
   notes: "",
 };
 
 function NewQuotePage() {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [calculation, setCalculation] = useState(null);
+  const [calculating, setCalculating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const requiresSecondApplicant =
+  const requiresApplicant2 =
     formData.cover_type === "Couple" ||
     formData.cover_type === "Family";
+
+  const isYearly = formData.payment_frequency === "Yearly";
 
   const handleChange = (event) => {
     const { name, value } = event.target;
 
-    setFormData((currentData) => ({
-      ...currentData,
-      [name]: value,
-    }));
+    setFormData((currentForm) => {
+      const updatedForm = {
+        ...currentForm,
+        [name]: value,
+      };
+
+      if (name === "cover_type" && value === "Single") {
+        updatedForm.applicant2_age = "";
+        updatedForm.applicant2_cover_history = "Yes";
+      }
+
+      if (name === "payment_frequency" && value === "Monthly") {
+        updatedForm.annual_discount = 0;
+      }
+
+      return updatedForm;
+    });
 
     setErrors((currentErrors) => ({
       ...currentErrors,
       [name]: "",
     }));
 
+    // Any input change invalidates the previous calculation.
+    setCalculation(null);
     setServerError("");
   };
 
@@ -50,43 +71,49 @@ function NewQuotePage() {
 
     if (!formData.customer_name.trim()) {
       newErrors.customer_name = "Customer name is required.";
-    } else if (formData.customer_name.trim().length < 2) {
-      newErrors.customer_name =
-        "Customer name must contain at least 2 characters.";
     }
 
     const applicant1Age = Number(formData.applicant1_age);
 
-    if (!formData.applicant1_age) {
+    if (formData.applicant1_age === "") {
       newErrors.applicant1_age = "Applicant 1 age is required.";
     } else if (
       !Number.isInteger(applicant1Age) ||
       applicant1Age < 18 ||
-      applicant1Age > 120
+      applicant1Age > 100
     ) {
       newErrors.applicant1_age =
-        "Applicant 1 age must be a whole number between 18 and 120.";
+        "Age must be a whole number between 18 and 100.";
     }
 
-    if (requiresSecondApplicant) {
+    if (requiresApplicant2) {
       const applicant2Age = Number(formData.applicant2_age);
 
-      if (!formData.applicant2_age) {
+      if (formData.applicant2_age === "") {
         newErrors.applicant2_age =
           "Applicant 2 age is required for Couple or Family cover.";
       } else if (
         !Number.isInteger(applicant2Age) ||
         applicant2Age < 18 ||
-        applicant2Age > 120
+        applicant2Age > 100
       ) {
         newErrors.applicant2_age =
-          "Applicant 2 age must be a whole number between 18 and 120.";
+          "Age must be a whole number between 18 and 100.";
       }
     }
 
+    const discount = Number(formData.annual_discount);
+
     if (
-      formData.notes.length > 500
+      !Number.isFinite(discount) ||
+      discount < 0 ||
+      discount > 10
     ) {
+      newErrors.annual_discount =
+        "Annual discount must be between 0 and 10.";
+    }
+
+    if (formData.notes.length > 500) {
       newErrors.notes =
         "Notes cannot contain more than 500 characters.";
     }
@@ -96,54 +123,94 @@ function NewQuotePage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const buildRequestData = () => ({
+    customer_name: formData.customer_name.trim(),
+    cover_type: formData.cover_type,
+    applicant1_age: Number(formData.applicant1_age),
+    applicant1_cover_history:
+      formData.applicant1_cover_history,
 
+    applicant2_age: requiresApplicant2
+      ? Number(formData.applicant2_age)
+      : null,
+
+    applicant2_cover_history: requiresApplicant2
+      ? formData.applicant2_cover_history
+      : null,
+
+    hospital_cover: formData.hospital_cover,
+    extras_cover: formData.extras_cover,
+    payment_frequency: formData.payment_frequency,
+
+    annual_discount: isYearly
+      ? Number(formData.annual_discount)
+      : 0,
+
+    notes: formData.notes.trim(),
+  });
+
+  const handleCalculate = async () => {
     if (!validateForm()) {
+      setCalculation(null);
       return;
     }
 
-    const quoteData = {
-      customer_name: formData.customer_name.trim(),
-      cover_type: formData.cover_type,
-      applicant1_age: Number(formData.applicant1_age),
-      applicant1_lhc: Number(formData.applicant1_lhc),
-      applicant2_age: requiresSecondApplicant
-        ? Number(formData.applicant2_age)
-        : null,
-      applicant2_lhc: requiresSecondApplicant
-        ? Number(formData.applicant2_lhc)
-        : 0,
-      hospital_cover: formData.hospital_cover,
-      extras_cover: formData.extras_cover,
-      payment_frequency: formData.payment_frequency,
-
-      // These values will be calculated automatically in Part 3.
-      monthly_premium: 0,
-      yearly_premium: 0,
-      discount: 0,
-
-      notes: formData.notes.trim(),
-    };
-
     try {
-      setSubmitting(true);
+      setCalculating(true);
       setServerError("");
 
-      await axios.post(API_URL, quoteData);
+      const response = await axios.post(
+        CALCULATE_API,
+        buildRequestData()
+      );
 
-      navigate("/");
+      setCalculation(response.data.calculation);
     } catch (error) {
-      console.error("Failed to create quote:", error);
+      console.error("Calculation failed:", error);
 
       setServerError(
         error.response?.data?.error ||
-          "Unable to create the quote. Please make sure the backend server is running."
+          "Unable to calculate the premium. Check that the backend server is running."
       );
+
+      setCalculation(null);
     } finally {
-      setSubmitting(false);
+      setCalculating(false);
     }
   };
+
+  const handleSave = async () => {
+    if (!calculation) {
+      setServerError(
+        "Please calculate the premium before saving the quote."
+      );
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setServerError("");
+
+      await axios.post(QUOTES_API, buildRequestData());
+
+      navigate("/");
+    } catch (error) {
+      console.error("Save failed:", error);
+
+      setServerError(
+        error.response?.data?.error ||
+          "Unable to save the quote. Check that the backend server is running."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const formatCurrency = (value) =>
+    Number(value || 0).toLocaleString("en-AU", {
+      style: "currency",
+      currency: "AUD",
+    });
 
   return (
     <section className="form-page">
@@ -152,7 +219,8 @@ function NewQuotePage() {
           <p className="eyebrow">Create quotation</p>
           <h1>New Health Cover Quote</h1>
           <p className="page-description">
-            Enter the customer and cover details below.
+            Enter the customer and cover details, calculate the
+            premium, and then save the quote.
           </p>
         </div>
 
@@ -167,14 +235,15 @@ function NewQuotePage() {
         </div>
       )}
 
-      <form className="quote-form" onSubmit={handleSubmit}>
-        <div className="form-section">
+      <div className="quote-form">
+        {/* Customer details */}
+        <section className="form-section">
           <div className="form-section-heading">
             <span className="section-number">1</span>
 
             <div>
               <h2>Customer Details</h2>
-              <p>Enter the name of the customer requesting the quote.</p>
+              <p>Enter the customer requesting the quote.</p>
             </div>
           </div>
 
@@ -204,15 +273,16 @@ function NewQuotePage() {
               )}
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="form-section">
+        {/* Cover details */}
+        <section className="form-section">
           <div className="form-section-heading">
             <span className="section-number">2</span>
 
             <div>
               <h2>Cover Details</h2>
-              <p>Select the required health insurance cover.</p>
+              <p>Select the requested insurance cover.</p>
             </div>
           </div>
 
@@ -247,10 +317,15 @@ function NewQuotePage() {
                 value={formData.hospital_cover}
                 onChange={handleChange}
               >
-                <option value="Basic">Basic</option>
-                <option value="Bronze">Bronze</option>
-                <option value="Silver">Silver</option>
-                <option value="Gold">Gold</option>
+                <option value="None">None</option>
+                <option value="Basic">Basic — $90/adult</option>
+                <option value="Bronze">
+                  Bronze — $120/adult
+                </option>
+                <option value="Silver">
+                  Silver — $160/adult
+                </option>
+                <option value="Gold">Gold — $220/adult</option>
               </select>
             </div>
 
@@ -267,9 +342,13 @@ function NewQuotePage() {
                 onChange={handleChange}
               >
                 <option value="None">None</option>
-                <option value="Basic">Basic</option>
-                <option value="Standard">Standard</option>
-                <option value="Premium">Premium</option>
+                <option value="Basic">Basic — $25/adult</option>
+                <option value="Standard">
+                  Standard — $45/adult
+                </option>
+                <option value="Premium">
+                  Premium — $70/adult
+                </option>
               </select>
             </div>
 
@@ -286,20 +365,61 @@ function NewQuotePage() {
                 onChange={handleChange}
               >
                 <option value="Monthly">Monthly</option>
-                <option value="Quarterly">Quarterly</option>
                 <option value="Yearly">Yearly</option>
               </select>
             </div>
-          </div>
-        </div>
 
-        <div className="form-section">
+            {isYearly && (
+              <div className="form-group">
+                <label htmlFor="annual_discount">
+                  Annual-Payment Discount %
+                </label>
+
+                <input
+                  id="annual_discount"
+                  name="annual_discount"
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value={formData.annual_discount}
+                  onChange={handleChange}
+                  className={
+                    errors.annual_discount
+                      ? "input-error"
+                      : ""
+                  }
+                />
+
+                {errors.annual_discount ? (
+                  <span className="field-error">
+                    {errors.annual_discount}
+                  </span>
+                ) : (
+                  <span className="field-help">
+                    Enter a value from 0% to 10%.
+                  </span>
+                )}
+              </div>
+            )}
+
+            {formData.cover_type === "Family" && (
+              <div className="form-information">
+                Family cover automatically includes a $30 monthly
+                upgrade fee. Children’s ages are not required.
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Applicant 1 */}
+        <section className="form-section">
           <div className="form-section-heading">
             <span className="section-number">3</span>
 
             <div>
               <h2>Applicant 1</h2>
-              <p>Enter the primary applicant information.</p>
+              <p>Enter the primary applicant’s details.</p>
             </div>
           </div>
 
@@ -315,13 +435,15 @@ function NewQuotePage() {
                 name="applicant1_age"
                 type="number"
                 min="18"
-                max="120"
+                max="100"
                 step="1"
                 value={formData.applicant1_age}
                 onChange={handleChange}
-                placeholder="18–120"
+                placeholder="18–100"
                 className={
-                  errors.applicant1_age ? "input-error" : ""
+                  errors.applicant1_age
+                    ? "input-error"
+                    : ""
                 }
               />
 
@@ -333,46 +455,41 @@ function NewQuotePage() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="applicant1_lhc">
-                LHC Loading
+              <label htmlFor="applicant1_cover_history">
+                Hospital Cover History
+                <span className="required-mark">*</span>
               </label>
 
               <select
-                id="applicant1_lhc"
-                name="applicant1_lhc"
-                value={formData.applicant1_lhc}
+                id="applicant1_cover_history"
+                name="applicant1_cover_history"
+                value={
+                  formData.applicant1_cover_history
+                }
                 onChange={handleChange}
               >
-                <option value="0">0%</option>
-                <option value="2">2%</option>
-                <option value="4">4%</option>
-                <option value="6">6%</option>
-                <option value="8">8%</option>
-                <option value="10">10%</option>
-                <option value="20">20%</option>
-                <option value="30">30%</option>
-                <option value="40">40%</option>
-                <option value="50">50%</option>
-                <option value="60">60%</option>
-                <option value="70">70%</option>
+                <option value="Yes">
+                  Yes — had hospital cover before
+                </option>
+                <option value="No">
+                  No — no previous hospital cover
+                </option>
+                <option value="Not sure">Not sure</option>
               </select>
-
-              <span className="field-help">
-                Lifetime Health Cover loading percentage.
-              </span>
             </div>
           </div>
-        </div>
+        </section>
 
-        {requiresSecondApplicant && (
-          <div className="form-section">
+        {/* Applicant 2 */}
+        {requiresApplicant2 && (
+          <section className="form-section">
             <div className="form-section-heading">
               <span className="section-number">4</span>
 
               <div>
                 <h2>Applicant 2</h2>
                 <p>
-                  Required because {formData.cover_type} cover is selected.
+                  Required for {formData.cover_type} cover.
                 </p>
               </div>
             </div>
@@ -389,13 +506,15 @@ function NewQuotePage() {
                   name="applicant2_age"
                   type="number"
                   min="18"
-                  max="120"
+                  max="100"
                   step="1"
                   value={formData.applicant2_age}
                   onChange={handleChange}
-                  placeholder="18–120"
+                  placeholder="18–100"
                   className={
-                    errors.applicant2_age ? "input-error" : ""
+                    errors.applicant2_age
+                      ? "input-error"
+                      : ""
                   }
                 />
 
@@ -407,96 +526,249 @@ function NewQuotePage() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="applicant2_lhc">
-                  LHC Loading
+                <label htmlFor="applicant2_cover_history">
+                  Hospital Cover History
+                  <span className="required-mark">*</span>
                 </label>
 
                 <select
-                  id="applicant2_lhc"
-                  name="applicant2_lhc"
-                  value={formData.applicant2_lhc}
+                  id="applicant2_cover_history"
+                  name="applicant2_cover_history"
+                  value={
+                    formData.applicant2_cover_history
+                  }
                   onChange={handleChange}
                 >
-                  <option value="0">0%</option>
-                  <option value="2">2%</option>
-                  <option value="4">4%</option>
-                  <option value="6">6%</option>
-                  <option value="8">8%</option>
-                  <option value="10">10%</option>
-                  <option value="20">20%</option>
-                  <option value="30">30%</option>
-                  <option value="40">40%</option>
-                  <option value="50">50%</option>
-                  <option value="60">60%</option>
-                  <option value="70">70%</option>
+                  <option value="Yes">
+                    Yes — had hospital cover before
+                  </option>
+                  <option value="No">
+                    No — no previous hospital cover
+                  </option>
+                  <option value="Not sure">
+                    Not sure
+                  </option>
                 </select>
-
-                <span className="field-help">
-                  Lifetime Health Cover loading percentage.
-                </span>
               </div>
             </div>
-          </div>
+          </section>
         )}
 
-        <div className="form-section">
+        {/* Notes */}
+        <section className="form-section">
           <div className="form-section-heading">
             <span className="section-number">
-              {requiresSecondApplicant ? "5" : "4"}
+              {requiresApplicant2 ? "5" : "4"}
             </span>
 
             <div>
               <h2>Additional Notes</h2>
-              <p>Add optional information about this quote.</p>
+              <p>Optional information about the quote.</p>
             </div>
           </div>
 
-          <div className="form-grid">
-            <div className="form-group full-width">
-              <label htmlFor="notes">Notes</label>
+          <div className="form-group">
+            <label htmlFor="notes">Notes</label>
 
-              <textarea
-                id="notes"
-                name="notes"
-                rows="5"
-                maxLength="500"
-                value={formData.notes}
-                onChange={handleChange}
-                placeholder="Optional notes..."
-                className={errors.notes ? "input-error" : ""}
-              />
+            <textarea
+              id="notes"
+              name="notes"
+              rows="5"
+              maxLength="500"
+              value={formData.notes}
+              onChange={handleChange}
+              placeholder="Optional notes..."
+              className={errors.notes ? "input-error" : ""}
+            />
 
-              <div className="textarea-information">
-                <span>
-                  {errors.notes ? (
-                    <span className="field-error">
-                      {errors.notes}
-                    </span>
-                  ) : (
-                    "Optional"
-                  )}
-                </span>
+            <div className="textarea-information">
+              <span>
+                {errors.notes ? (
+                  <span className="field-error">
+                    {errors.notes}
+                  </span>
+                ) : (
+                  "Optional"
+                )}
+              </span>
 
-                <span>{formData.notes.length}/500</span>
-              </div>
+              <span>{formData.notes.length}/500</span>
             </div>
           </div>
+        </section>
+
+        {/* Calculate button */}
+        <div className="calculate-actions">
+          <button
+            type="button"
+            className="button calculate-button"
+            onClick={handleCalculate}
+            disabled={calculating}
+          >
+            {calculating
+              ? "Calculating..."
+              : "Calculate Premium"}
+          </button>
         </div>
 
+        {/* Calculation result */}
+        {calculation && (
+          <section className="calculation-card">
+            <div className="calculation-heading">
+              <div>
+                <p className="eyebrow">Estimated premium</p>
+                <h2>Quote Calculation</h2>
+              </div>
+
+              <span className="calculation-status">
+                Calculation complete
+              </span>
+            </div>
+
+            <div className="premium-summary">
+              <div className="premium-summary-item">
+                <span>Monthly Premium</span>
+                <strong>
+                  {formatCurrency(
+                    calculation.monthly_premium
+                  )}
+                </strong>
+              </div>
+
+              <div className="premium-summary-item">
+                <span>Yearly Before Discount</span>
+                <strong>
+                  {formatCurrency(
+                    calculation.yearly_before_discount
+                  )}
+                </strong>
+              </div>
+
+              {isYearly && (
+                <div className="premium-summary-item highlighted">
+                  <span>Final Yearly Premium</span>
+                  <strong>
+                    {formatCurrency(
+                      calculation.yearly_premium
+                    )}
+                  </strong>
+                </div>
+              )}
+            </div>
+
+            <div className="calculation-breakdown">
+              <div className="breakdown-row">
+                <span>Hospital premium</span>
+                <strong>
+                  {formatCurrency(
+                    calculation.total_hospital_cost
+                  )}
+                </strong>
+              </div>
+
+              <div className="breakdown-row">
+                <span>Extras premium</span>
+                <strong>
+                  {formatCurrency(
+                    calculation.total_extras_cost
+                  )}
+                </strong>
+              </div>
+
+              <div className="breakdown-row">
+                <span>Applicant 1 LHC loading</span>
+                <strong>
+                  {
+                    calculation.applicant1_lhc_percentage
+                  }
+                  %
+                </strong>
+              </div>
+
+              {requiresApplicant2 && (
+                <div className="breakdown-row">
+                  <span>Applicant 2 LHC loading</span>
+                  <strong>
+                    {
+                      calculation.applicant2_lhc_percentage
+                    }
+                    %
+                  </strong>
+                </div>
+              )}
+
+              {formData.cover_type === "Family" && (
+                <div className="breakdown-row">
+                  <span>Family upgrade fee</span>
+                  <strong>
+                    {formatCurrency(
+                      calculation.family_fee
+                    )}
+                  </strong>
+                </div>
+              )}
+
+              {isYearly && (
+                <>
+                  <div className="breakdown-row">
+                    <span>Annual discount</span>
+                    <strong>
+                      {calculation.annual_discount}%
+                    </strong>
+                  </div>
+
+                  <div className="breakdown-row">
+                    <span>Discount amount</span>
+                    <strong>
+                      −
+                      {formatCurrency(
+                        calculation.discount_amount
+                      )}
+                    </strong>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="lhc-statement">
+              Lifetime Health Cover loading applies only to
+              hospital cover. It does not apply to extras cover.
+            </div>
+
+            {calculation.warnings.length > 0 && (
+              <div className="warning-box">
+                <h3>Warnings</h3>
+
+                <ul>
+                  {calculation.warnings.map(
+                    (warning, index) => (
+                      <li key={`${warning}-${index}`}>
+                        {warning}
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Final actions */}
         <div className="form-actions">
           <Link to="/" className="button secondary-button">
             Cancel
           </Link>
 
           <button
-            type="submit"
+            type="button"
             className="button primary-button"
-            disabled={submitting}
+            onClick={handleSave}
+            disabled={!calculation || saving}
           >
-            {submitting ? "Saving Quote..." : "Save Quote"}
+            {saving ? "Saving Quote..." : "Save Quote"}
           </button>
         </div>
-      </form>
+      </div>
     </section>
   );
 }
