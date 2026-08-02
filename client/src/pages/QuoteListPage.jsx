@@ -112,6 +112,13 @@ function QuoteListPage() {
                     <td>
                       <div className="action-buttons">
                         <Link
+                          to={`/quotes/${quote.id}`}
+                          className="button view-button small-button"
+                        >
+                          View
+                        </Link>
+
+                        <Link
                           to={`/quotes/${quote.id}/edit`}
                           className="button secondary-button small-button"
                         >

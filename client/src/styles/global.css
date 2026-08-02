@@ -569,3 +569,163 @@ a {
     width: 100%;
   }
 }
+
+.view-button {
+  color: #ffffff;
+  background: #027a48;
+}
+
+.view-button:hover {
+  background: #05603a;
+}
+
+.detail-page-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.detail-summary-card,
+.detail-card {
+  padding: 28px;
+  background: #ffffff;
+  border: 1px solid #dde3ed;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(23, 32, 51, 0.06);
+}
+
+.detail-summary-card {
+  margin-bottom: 24px;
+}
+
+.detail-summary-heading {
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.detail-summary-heading h2,
+.detail-card h2 {
+  margin: 4px 0 0;
+}
+
+.cover-type-badge {
+  padding: 7px 13px;
+  color: #1849a9;
+  background: #eef4ff;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.detail-grid {
+  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.full-detail-card {
+  margin-bottom: 24px;
+}
+
+.detail-list {
+  margin-top: 20px;
+  border: 1px solid #e4e9f0;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.detail-row {
+  padding: 13px 15px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #e9edf3;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row span {
+  color: #68738a;
+}
+
+.applicant-detail-block + .applicant-detail-block {
+  margin-top: 28px;
+}
+
+.applicant-detail-block h3 {
+  margin-bottom: 0;
+  color: #344054;
+}
+
+.total-row {
+  background: #f8fafc;
+}
+
+.final-total-row {
+  color: #ffffff;
+  background: #155eef;
+}
+
+.final-total-row span,
+.final-total-row strong {
+  color: #ffffff;
+}
+
+.plain-explanation {
+  margin-top: 24px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 9px;
+}
+
+.plain-explanation h3 {
+  margin: 0 0 12px;
+}
+
+.plain-explanation p {
+  margin: 8px 0;
+  color: #59657b;
+  line-height: 1.65;
+}
+
+.notes-box {
+  margin-top: 18px;
+  padding: 18px;
+  background: #f8fafc;
+  border: 1px solid #e4e9f0;
+  border-radius: 8px;
+}
+
+.notes-box h3 {
+  margin: 0 0 8px;
+}
+
+.notes-box p {
+  margin: 0;
+  color: #59657b;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 760px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-page-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .detail-page-actions .button {
+    width: 100%;
+  }
+
+  .detail-summary-heading {
+    flex-direction: column;
+  }
+}

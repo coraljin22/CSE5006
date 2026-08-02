@@ -2,6 +2,7 @@ import { Link, Route, Routes } from "react-router-dom";
 import QuoteListPage from "./pages/QuoteListPage";
 import NewQuotePage from "./pages/NewQuotePage";
 import EditQuotePage from "./pages/EditQuotePage";
+import QuoteDetailPage from "./pages/QuoteDetailPage";
 import ExplanationPage from "./pages/ExplanationPage";
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Routes>
           <Route path="/" element={<QuoteListPage />} />
           <Route path="/quotes/new" element={<NewQuotePage />} />
+          <Route path="/quotes/:id" element={<QuoteDetailPage />} />
           <Route path="/quotes/:id/edit" element={<EditQuotePage />} />
           <Route path="/explanation" element={<ExplanationPage />} />
         </Routes>
