@@ -1235,7 +1235,7 @@ a {
 }
 
 .explanation-hero {
-  padding: 38px;
+  padding: 34px 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1259,15 +1259,16 @@ a {
 }
 
 .explanation-hero h1 {
-  margin: 7px 0 12px;
+  margin: 5px 0 10px;
   max-width: 680px;
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: 1.7rem;
 }
 
 .explanation-hero p {
-  max-width: 760px;
+  max-width: 720px;
   margin: 0;
-  line-height: 1.7;
+  line-height: 1.55;
+  font-size:0.89rem;
   opacity: 0.92;
 }
 
@@ -2197,6 +2198,8 @@ a {
 
 .explanation-back-button {
   flex-shrink: 0;
+  padding: 9px 17px;
+  font-size: 0.87rem;
   color: #155eef;
   background: #ffffff;
   box-shadow: 0 8px 20px rgba(9, 44, 105, 0.2);
@@ -2472,7 +2475,7 @@ a {
 .footer-brand p {
   margin: 0;
   color: #667085;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 
 .footer-divider {
@@ -2485,13 +2488,13 @@ a {
 .footer-note {
   margin: 0;
   color: #667085;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
 }
 
 .footer-copyright {
   margin-top: 8px;
   color: #98a2b3;
-  font-size: 0.74rem;
+  font-size: 0.78rem;
 }
 
 @keyframes footerHeartbeat {
