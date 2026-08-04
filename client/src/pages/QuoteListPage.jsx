@@ -174,7 +174,7 @@ function QuoteListPage() {
       {!error && (
         <>
           <section className="dashboard-stat-grid">
-            <article className="dashboard-stat-card">
+            <article className="dashboard-stat-card stat-card-default">
               <div className="dashboard-stat-icon">📄</div>
 
               <div>
@@ -184,7 +184,7 @@ function QuoteListPage() {
               </div>
             </article>
 
-            <article className="dashboard-stat-card">
+            <article className="dashboard-stat-card stat-card-default">
               <div className="dashboard-stat-icon">💰</div>
 
               <div>
@@ -194,9 +194,12 @@ function QuoteListPage() {
                 </strong>
                 <small>Across all saved quotes</small>
               </div>
+
+              <div className="stat-watermark average-watermark" aria-hidden="true">
+              </div>
             </article>
 
-            <article className="dashboard-stat-card">
+            <article className="dashboard-stat-card stat-card-default">
               <div className="dashboard-stat-icon">📅</div>
 
               <div>
@@ -206,13 +209,16 @@ function QuoteListPage() {
               </div>
             </article>
 
-            <article className="dashboard-stat-card">
+            <article className="dashboard-stat-card stat-card-default">
               <div className="dashboard-stat-icon">👨‍👩‍👧‍👦</div>
 
               <div>
                 <span>Family Cover</span>
                 <strong>{statistics.familyQuotes}</strong>
                 <small>Quotes with family upgrade</small>
+              </div>
+
+              <div className="stat-watermark family-watermark" aria-hidden="true">
               </div>
             </article>
           </section>
