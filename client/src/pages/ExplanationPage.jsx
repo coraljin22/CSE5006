@@ -30,15 +30,13 @@ function ExplanationPage() {
           <p className="eyebrow">Premium calculation guide</p>
           <h1>How HealthCoverSim Calculates a Quote</h1>
           <p>
-            HealthCoverSim calculates an estimated private health insurance 
-            premium by keeping hospital and extras cover separate, applying 
-            Lifetime Health Cover loading only to hospital cover, and 
-            applying an annual discount only when Yearly payment is selected.
+            Learn how HealthCoverSim estimates premiums, 
+            applies Lifetime Health Cover loading and calculates yearly discounts for educational purposes.
           </p>
         </div>
 
-        <Link to="/quotes/new" className="button primary-button">
-          Create a Quote
+        <Link to= "/" className="button explanation-back-button">
+          Back to Dashboard
         </Link>
       </div>
 
@@ -57,7 +55,7 @@ function ExplanationPage() {
             <table className="pricing-table">
               <thead>
                 <tr>
-                  <th>Hospital level</th>
+                  <th>Hospital Level</th>
                   <th>Per adult / month</th>
                 </tr>
               </thead>
@@ -94,7 +92,7 @@ function ExplanationPage() {
             <table className="pricing-table">
               <thead>
                 <tr>
-                  <th>Extras level</th>
+                  <th>Extras Level</th>
                   <th>Per adult / month</th>
                 </tr>
               </thead>
@@ -119,10 +117,10 @@ function ExplanationPage() {
 
         <section className="guide-card">
           <div className="guide-card-heading">
-            <span className="guide-icon">📅</span>
+            <span className="guide-icon">💰</span>
 
             <div>
-              <h2>Extras Cover</h2>
+              <h2>Payment Frequency</h2>
               <p>Monthly base price per adult</p>
             </div>
           </div>
@@ -131,7 +129,7 @@ function ExplanationPage() {
             <table className="pricing-table">
               <thead>
                 <tr>
-                  <th>Extras level</th>
+                  <th>Extras Level</th>
                   <th>Per adult / month</th>
                 </tr>
               </thead>
@@ -273,7 +271,7 @@ function ExplanationPage() {
           </div>
 
           <div className="payment-rule">
-            <h3>Monthly payment</h3>
+            <h3>Monthly Payment</h3>
             <p>
               The monthly premium and yearly premium before discount are shown.
               No annual discount is applied.
@@ -281,7 +279,7 @@ function ExplanationPage() {
           </div>
 
           <div className="payment-rule">
-            <h3>Yearly payment</h3>
+            <h3>Yearly Payment</h3>
             <p>
               The monthly premium is multiplied by 12 and the selected
               annual discount of 0%-10% is applied.
@@ -316,7 +314,7 @@ function ExplanationPage() {
             <span>2</span>
 
             <div>
-              <strong>Hospital total</strong>
+              <strong>Hospital Total</strong>
               <p>
                 Add the hospital premium for each adult included in the
                 quote.
@@ -328,7 +326,7 @@ function ExplanationPage() {
             <span>3</span>
 
             <div>
-              <strong>Extras total</strong>
+              <strong>Extras Total</strong>
               <p>
                 Extras tier price × number of adults
               </p>
@@ -339,7 +337,7 @@ function ExplanationPage() {
             <span>4</span>
 
             <div>
-              <strong>Monthly premium</strong>
+              <strong>Monthly Premium</strong>
               <p>
                 Hospital total + Extras total + Family fee
               </p>
@@ -350,9 +348,9 @@ function ExplanationPage() {
             <span>5</span>
             
             <div>
-              <strong>Yearly premium</strong>
+              <strong>Yearly Premium</strong>
               <p>
-                Monthly premium × 12
+                Monthly Premium × 12
               </p>
             </div>
           </div>
@@ -361,7 +359,7 @@ function ExplanationPage() {
             <span>6</span>
 
             <div>
-              <strong>Final yearly premium</strong>
+              <strong>Estimated Final Premium</strong>
               <p>
                 Yearly before discount × (1 - annual discount)
               </p>
@@ -370,12 +368,12 @@ function ExplanationPage() {
         </div>
       </section>
 
-      <section className="guide-card full-width-guide-card example -card">
+      <section className="guide-card full-width-guide-card example-card">
         <div className="guide-card-heading">
           <span className="guide-icon">📝</span>
 
           <div>
-            <h2>Work Example</h2>
+            <h2>Worked Example</h2>
             <p>The main example used to verify the application</p>
           </div>
         </div>
@@ -424,32 +422,32 @@ function ExplanationPage() {
           </div>
 
           <div className="example-result-row">
-            <span>Hospital total</span>
+            <span>Hospital Total</span>
             <strong>$352</strong>
           </div>
 
           <div className="example-result-row">
-            <span>Extras total</span>
+            <span>Extras Total</span>
             <strong>$90</strong>
           </div>
 
           <div className="example-result-row">
-            <span>Family fee</span>
+            <span>Family Fee</span>
             <strong>$30</strong>
           </div>
 
           <div className="example-result-row highlighted-result">
-            <span>Monthly premium</span>
+            <span>Monthly Premium</span>
             <strong>$472</strong>
           </div>
 
           <div className="example-result-row">
-            <span>Yearly before discount</span>
+            <span>Yearly before Discount</span>
             <strong>$472 × 12 = $5,664</strong>
           </div>
 
           <div className="example-result-row final-result">
-            <span>Final yearly premium</span>
+            <span>Estimated Final Premium</span>
             <strong>$5,664 × 0.95 = $5,380.80</strong>
           </div>
         </div>
@@ -490,13 +488,22 @@ function ExplanationPage() {
         </ul>
       </section>
 
+      <div className="guide-disclaimer">
+        <strong>Disclaimer</strong>
+          <p>
+            HealthCoverSim is an educational simulator.
+            Premiums displayed by the system are estimates only and
+            should not be interpreted as financial advice.
+          </p>
+      </div>    
+
       <div className="explanation-actions">
         <Link to="/" className="button secondary-button">
-          View Saved Quotes
+          Dashboard
         </Link>
 
         <Link to="/quotes/new" className="button primary-button">
-          Create New Quote
+          Create Quote
         </Link>
       </div>
     </section>

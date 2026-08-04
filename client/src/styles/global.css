@@ -1176,6 +1176,16 @@ a {
   border: 1px solid #dde3ed;
   border-radius: 14px;
   box-shadow: 0 8px 26px rgba(23, 32, 51, 0.06);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.guide-card:hover {
+  transform: translateY(-3px);
+  border-color: #c7d7fe;
+  box-shadow: 0 14px 32px rgba(23, 32, 51, 0.1);
 }
 
 .full-width-guide-card {
@@ -1445,8 +1455,13 @@ a {
   color: #59657b;
 }
 
+.validation-list li::marker {
+  color: #155eef;
+}
+
 .validation-list li {
   margin-bottom: 11px;
+  padding-left: 4px;
   line-height: 1.6;
 }
 
@@ -1482,6 +1497,7 @@ a {
 
   .explanation-actions .button {
     width: 100%;
+    min-width: 150;
   }
 }
 
@@ -2022,4 +2038,59 @@ a {
   .dashboard-stat-card {
     padding: 19px;
   }
+}
+
+.detail-page-heading {
+  padding: 26px 28px;
+  background: #ffffff;
+  border: 1px solid #dde3ed;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(23, 32, 51, 0.06);
+}
+
+.detail-summary-card,
+.detail-card {
+  border-radius: 16px;
+}
+
+.detail-card {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.detail-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(23, 32, 51, 0.09);
+}
+
+.detail-row strong {
+  color: #172033;
+  text-align: right;
+}
+
+.notes-box {
+  border-left: 4px solid #155eef;
+}
+
+.guide-disclaimer{
+  margin-top:28px;
+  padding:22px;
+  background:#fff8e8;
+  border-left:5px solid #f59e0b;
+  border-radius:12px;
+  line-height:1.7;
+}
+
+.explanation-back-button {
+  flex-shrink: 0;
+  color: #155eef;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(9, 44, 105, 0.2);
+}
+
+.explanation-back-button:hover {
+  color: #0f4ed1;
+  background: #f8fbff;
+  transform: translateY(-2px);
 }
