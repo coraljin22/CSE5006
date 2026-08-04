@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { FaEye } from "react-icons/fa";
 import axios from "axios";
 
 const API_URL = "http://localhost:3001/api/quotes";
@@ -324,17 +325,11 @@ function QuoteListPage() {
                         </td>
 
                         <td>
-                          <div className="table-value-stack">
-                            <strong>{quote.hospital_cover}</strong>
-                            <span>Hospital cover</span>
-                          </div>
+                          <strong>{quote.hospital_cover}</strong>
                         </td>
 
                         <td>
-                          <div className="table-value-stack">
-                            <strong>{quote.extras_cover}</strong>
-                            <span>Extras cover</span>
-                          </div>
+                          <strong>{quote.extras_cover}</strong>
                         </td>
 
                         <td>
@@ -364,7 +359,7 @@ function QuoteListPage() {
                               to={`/quotes/${quote.id}`}
                               className="button view-button small-button"
                             >
-                              View
+                              <FaEye />
                             </Link>
 
                             <Link

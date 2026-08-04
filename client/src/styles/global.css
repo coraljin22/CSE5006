@@ -399,37 +399,83 @@ a {
 
 .button {
   border: none;
-  border-radius: 8px;
+  border-radius: 9px;
   padding: 11px 17px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 7px;
   cursor: pointer;
   font-weight: 700;
+  line-height: 1;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button:active {
+  transform: translateY(0);
 }
 
 .primary-button {
   color: #ffffff;
   background: #155eef;
+  box-shadow: 0 5px 14 px rgba(21, 94, 239, 0.2);
 }
 
 .primary-button:hover {
   background: #0f4ed1;
+  box-shadow: 0 8px 18px rgba(21, 94, 239, 0.28);
 }
 
+/*edit*/
 .secondary-button {
   color: #1849a9;
   background: #e8efff;
+  border: 1px solid #dfe4ea;
 }
 
+.secondary-button:hover {
+  color: #1849a9;
+  background: #eef4ff;
+  border-color: #c7d7fe;
+  box-shadow: 0 5px 12px rgba(24, 73, 169, 0.12);
+}
+
+/*Delete*/
 .danger-button {
   color: #b42318;
   background: #fee4e2;
+  border: 1px solid #fecdca;
 }
 
+.danger-button:hover {
+  color: #ffffff;
+  background: #d92d20;
+  border-color: #d92d20;
+  box-shadow: 0 6px 14px rgba(217, 45, 32, 0.2);
+}
+
+/* Action group */
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Table buttons */
 .small-button {
+  min-height: 34px;
   padding: 8px 12px;
-  font-size: 0.88rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  white-space: nowrap;
 }
 
 .table-container {
@@ -867,13 +913,17 @@ a {
   }
 }
 
+/*View-button*/
 .view-button {
   color: #ffffff;
-  background: #027a48;
+  background: #155eef;
+  box-shadow: 0 5px 12px rgba(21, 94, 239, 0.18);
 }
 
 .view-button:hover {
-  background: #05603a;
+  color: #ffffff;
+  background: #0f4ed1;
+  box-shadow: 0 7px 16px rgba(21, 94, 239, 0.25);
 }
 
 .detail-page-actions {
@@ -1738,14 +1788,20 @@ a {
 }
 
 .quote-search {
-  min-width: 290px;
+  min-width: 320px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 14px;
-  background: #f8fafc;
-  border: 1px solid #d7dee8;
-  border-radius: 10px;
+  gap: 12px;
+  padding: 0 18px;
+  background: #ffffff;
+  border: 2px solid #e5eaf2;
+  border-radius: 14px;
+  transition: all .25s ease;
+}
+
+.quote-search:focus-within {
+    border-color:#155eef;
+    box-shadow: 0 0 0 4px rgba(21,94,239,.10);
 }
 
 .quote-search span {
@@ -1756,8 +1812,8 @@ a {
 .quote-search input {
   width: 100%;
   border: none;
-  padding: 12px 0;
-  color: #172033;
+  padding: 15px 0;
+  color: #b0b8c7;
   background: transparent;
   outline: none;
 }
@@ -1773,15 +1829,27 @@ a {
 }
 
 .dashboard-quote-table th {
-  padding-top: 15px;
-  padding-bottom: 15px;
-  background: #f8fafc;
+    padding:18px 16px;
+    background:#f8fafc;
+    color:#5f6b7c;
+    font-size:.82rem;
+    font-weight:700;
+    letter-spacing:.05em;
+    text-transform:uppercase;
 }
 
 .dashboard-quote-table td {
   padding-top: 17px;
   padding-bottom: 17px;
   vertical-align: middle;
+}
+
+.dashboard-quote-table tbody tr{
+    transition:all .25s ease;
+}
+
+.dashboard-quote-table tbody tr:hover{
+    background:#f6faff;
 }
 
 .customer-cell {
@@ -1791,8 +1859,8 @@ a {
 }
 
 .customer-avatar {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -1800,12 +1868,15 @@ a {
   color: #ffffff;
   background: linear-gradient(135deg, #155eef, #4b7bec);
   border-radius: 50%;
-  font-size: 0.82rem;
+  font-size: 0.92rem;
+  box-shadow: 0 4px 10px rgba(21, 94, 239, 0.18);
   font-weight: 800;
 }
 
 .customer-cell strong {
   display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
   margin-bottom: 3px;
   color: #172033;
 }
@@ -1816,16 +1887,16 @@ a {
 }
 
 .table-value-stack strong,
-.premium-table-value strong {
-  display: block;
-  margin-bottom: 3px;
-  color: #172033;
+.premium-table-value strong{
+    color:#155eef;
+    font-size:1.12rem;
+    font-weight:800;
 }
 
 .table-value-stack span,
 .premium-table-value span {
   color: #98a2b3;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
 }
 
 .premium-table-value strong {
@@ -1836,9 +1907,9 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 7px 11px;
+  padding: 8px 14px;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
