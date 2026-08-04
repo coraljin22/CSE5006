@@ -87,7 +87,7 @@ function QuoteDetailPage() {
         <div className="alert error-alert">{error}</div>
 
         <Link to="/" className="button secondary-button">
-          Back to Quotes
+          Back to Dashboard
         </Link>
       </section>
     );
@@ -103,36 +103,68 @@ function QuoteDetailPage() {
   const hasApplicant2 =
     quote.cover_type === "Couple" ||
     quote.cover_type === "Family";
+  
+  const getCoverBadgeClass = (coverType) => {
+    if (coverType === "Family") {
+      return "badge badge-family";
+    }
+
+    if (coverType === "Couple") {
+      return "badge badge-couple";
+    }
+
+    return "badge badge-single";
+  };
 
   return (
     <section className="detail-page">
-      <div className="page-heading">
+      <div className="page-heading detail-page-heading">
         <div>
-          <p className="eyebrow">
-            Quote #{quote.id}
-          </p>
-
+          <p className="eyebrow">Quote #{quote.id}</p>
           <h1>{quote.customer_name}</h1>
 
           <p className="page-description">
-            Detailed health insurance quote explanation.
+            Review the customer information, selected cover and premium
+            calculation.
           </p>
         </div>
 
         <div className="detail-page-actions">
-          <Link
-            to={`/quotes/${quote.id}/edit`}
-            className="button secondary-button"
-          >
+          <Link to={`/quotes/${quote.id}/edit`} className="button secondary-button">
             Edit Quote
           </Link>
 
-          <Link
-            to="/"
-            className="button primary-button"
-          >
-            Back to Quotes
+          <Link to="/" className="button primary-button">
+            Back to Dashboard
           </Link>
+        </div>
+      </div>
+
+      <div className="detail-status-bar">
+        <div className="detail-status-item">
+          <span className="saved-status-pill">
+            ✓ Saved
+          </span>
+        </div>
+
+        <div className="detail-status-item">
+          <span>Quote ID</span>
+          <strong>#{quote.id}</strong>
+        </div>
+
+        <div className="detail-status-item">
+          <span>Created</span>
+
+          <strong>
+            {quote.created_at
+              ? new Date(quote.created_at).toLocaleDateString("en-AU")
+              : "Not available"}
+          </strong>
+        </div>
+
+        <div className="detail-status-item">
+          <span>Payment</span>
+          <strong>{quote.payment_frequency}</strong>
         </div>
       </div>
 
@@ -155,35 +187,28 @@ function QuoteDetailPage() {
         <div className="premium-summary">
           <div className="premium-summary-item">
             <span>Monthly Premium</span>
-
             <strong>
-              {formatCurrency(
-                calculation.monthly_premium
-              )}
+              {formatCurrency(calculation.monthly_premium)}
             </strong>
           </div>
 
           <div className="premium-summary-item">
             <span>Yearly Before Discount</span>
-
             <strong>
-              {formatCurrency(
-                calculation.yearly_before_discount
-              )}
+              {formatCurrency(calculation.yearly_before_discount)}
             </strong>
           </div>
 
-          {isYearly && (
-            <div className="premium-summary-item highlighted">
-              <span>Final Yearly Premium</span>
-
-              <strong>
-                {formatCurrency(
-                  calculation.yearly_premium
-                )}
-              </strong>
-            </div>
-          )}
+          <div className="premium-summary-item highlighted">
+            <span>
+              {isYearly ? "Final Yearly Premium" : "Estimated Yearly Premium"}
+            </span>
+                  <strong>
+                    {formatCurrency(
+                      calculation.yearly_premium
+                    )}
+                  </strong>
+          </div>
         </div>
       </section>
 
@@ -199,7 +224,7 @@ function QuoteDetailPage() {
             </div>
 
             <div className="detail-row">
-                <span>Created date</span>
+                <span>Created Date</span>
                 <strong>
                     {quote.created_at
                       ? new Date(quote.created_at).toLocaleString("en-AU")
@@ -208,34 +233,34 @@ function QuoteDetailPage() {
             </div>
 
             <div className="detail-row">
-              <span>Customer name</span>
+              <span>Customer Name</span>
               <strong>{quote.customer_name}</strong>
             </div>
 
             <div className="detail-row">
-              <span>Cover type</span>
-              <strong>{quote.cover_type}</strong>
+              <span>Cover Type</span>
+              <strong className={getCoverBadgeClass(quote.cover_type)}>{quote.cover_type}</strong>
             </div>
 
             <div className="detail-row">
-              <span>Hospital cover</span>
-              <strong>{quote.hospital_cover}</strong>
+              <span>Hospital Cover</span>
+              <strong className="detail-value-badge hospital-detail-badge">
+                {quote.hospital_cover}</strong>
             </div>
 
             <div className="detail-row">
-              <span>Extras cover</span>
-              <strong>{quote.extras_cover}</strong>
+              <span>Extras Cover</span>
+              <strong className="detail-value-badge extras-detail-badge">{quote.extras_cover}</strong>
             </div>
 
             <div className="detail-row">
-              <span>Payment frequency</span>
-              <strong>
+              <span>Payment Frequency</span>
+              <strong className={quote.payment_frequency === "Yearly"? "badge badge-yearly": "badge badge-monthly"}>
                 {quote.payment_frequency}
               </strong>
             </div>
-
             <div className="detail-row">
-              <span>Annual discount</span>
+              <span>Annual Discount</span>
               <strong>
                 {isYearly
                   ? `${calculation.annual_discount}%`
@@ -494,7 +519,7 @@ function QuoteDetailPage() {
           </div>
         ) : (
           <div className="success-box">
-            <strong>No calculation warnings.</strong>
+            <strong>✓  No calculation warnings.</strong>
             <p>
                 The supplied information was sufficient to calculate this estimate without an LHC uncertainty warning.
             </p>
