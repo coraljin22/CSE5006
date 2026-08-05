@@ -82,7 +82,7 @@ HealthCoverSim
 Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/HealthCoverSim.git
+git clone https://github.com/coraljin/CSE5006/HealthCoverSim.git
 ```
 
 Install dependencies
@@ -218,6 +218,30 @@ Generative AI tools (ChatGPT) were used to assist with the following tasks:
 - Drafting the README document
 
 The application logic, premium calculations, validation rules, testing, and final submission were all completed, reviewed, and verified by the author.
+
+##Screenshots
+
+###Dashboard
+![](screenshots/image.png)
+
+###Create Quote
+![](screenshots/image-1.png)
+![](screenshots/image-2.png)
+
+###Quote Detail
+![](screenshots/image-3.png)
+![](screenshots/image-4.png)
+![](screenshots/image-5.png)
+![](screenshots/image-6.png)
+
+###Explanation Sheet
+![](screenshots/image-7.png)
+![](screenshots/image-8.png)
+![](screenshots/image-9.png)
+![](screenshots/image-10.png)
+![](screenshots/image-11.png)
+![](screenshots/image-12.png)
+![](screenshots/image-13.png)
 
 # Author
 
